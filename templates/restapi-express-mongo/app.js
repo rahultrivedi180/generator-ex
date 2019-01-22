@@ -8,10 +8,10 @@ const mongoose = require('mongoose')
 mongoose.Promise = global.Promise
 mongoose
   .connect(
-    'DB_URL',
+    'db_url',
     { useNewUrlParser: true }
   )
-  .then(() => console.log('db connected'))
+  .then(() => console.log('connected to db_url'))
   .catch(err => console.log(err.stack))
 
 const userRoutes = require('./api/routes/userRoutes')

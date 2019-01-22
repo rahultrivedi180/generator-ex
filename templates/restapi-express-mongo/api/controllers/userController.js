@@ -2,16 +2,10 @@ const userSchema = require('../models/userModel').userSchema
 
 exports.addUser = async (req, res) => {
   try {
-    const name = req.body.name
-    const age = req.body.age
-
-    const newUser = await userSchema.findOne({
-      name: name,
-      age: age
+    const newUser = new userSchema({
+      name: req.body.name,
+      age: req.body.age
     })
-    if (newUser) {
-      return res.status(409).json({ error: 'user already exists' })
-    }
     await newUser.save()
     return res.status(201).json({ msg: 'User added' })
   } catch (err) {
@@ -19,7 +13,7 @@ exports.addUser = async (req, res) => {
   }
 }
 
-exports.showUsers = (req, res) => {
+exports.showUsers = async (req, res) => {
   try {
     const allUsers = await userSchema.find({})
     return res.status(200).json({ users: allUsers })

@@ -1,18 +1,21 @@
-#!/usr/bin/env
+#!/usr/bin/env node
 const inquirer = require('inquirer')
 const path = require('path')
 const fs = require('fs')
-const shell = require('shelljs')
+const sh = require('shelljs')
+const current_dir = process.cwd()
+const choices = fs.readdirSync(path.join(__dirname, 'templates'))
 
-const CUR_DIR = process.cwd()
-const CHOICES = fs.readdirSync(path.join(__dirname, 'templates'))
-shell.exec('clear')
-const QUESTIONS = [
+const generator0 = require('./generators/restapi-express-mongo').generate
+
+sh.exec('clear')
+
+const questions = [
   {
     name: 'template-choice',
     type: 'list',
     message: 'Select a template: ',
-    choices: CHOICES
+    choices: choices
   },
   {
     name: 'project-name',
@@ -29,39 +32,23 @@ const QUESTIONS = [
   }
 ]
 
-async function ReadFile() {
+async function init() {
   try {
-    const answers = await inquirer.prompt(QUESTIONS)
+    const answers = await inquirer.prompt(questions)
     const templateChoice = answers['template-choice']
     const projectName = answers['project-name']
     const templatePath = path.join(__dirname, 'templates', templateChoice)
+    const src = path.join(templatePath, '/*')
+    const dest = path.join(current_dir, projectName, '/')
 
-    await shell.mkdir(path.join(CUR_DIR, projectName))
+    await sh.mkdir(path.join(current_dir, projectName))
+    const cp = await sh.cp('-R', src, dest)
 
-    const source = path.join(templatePath, '/*')
-    const destnation = path.join(__dirname, projectName, '/')
-    const dbFile = path.join(CUR_DIR, projectName, 'app.js')
-    const copyDir = await shell.cp('-R', source, destnation)
-    const DB = {
-      name: 'DB_URL',
-      type: 'input',
-      message: 'Specify database url: ',
-      default: 'mongodb://localhost/db',
-      validate: function(input) {
-        if (/^([A-Za-z0-9\/\:])+$/.test(input)) {
-          return true
-        } else {
-          return '!!Invalid database name!!'
-        }
-      }
+    if (templateChoice === choices[0]) {
+      generator0(current_dir, projectName, templatePath)
     }
-
-    const getDB_URL = await inquirer.prompt(DB)
-    const DB_URL = getDB_URL['DB_URL']
-    await shell.sed('-i', 'DB_URL', DB_URL, dbFile)
-    await shell.exec('cd ' + destnation + ' && npm install && npm start')
   } catch (err) {
     console.log(err)
   }
 }
-ReadFile()
+init()
